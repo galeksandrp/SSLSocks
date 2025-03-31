@@ -1,0 +1,39 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "ci" ]
+  pull_request:
+    branches: [ "ci" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Build with Gradle
+      run: keystore_password=${{ secrets.KEYSTORE_PASSWORD }} keystore_alias=${{ secrets.KEYSTORE_ALIAS }} keystore_alias_password=${{ secrets.KEYSTORE_ALIAS_PASSWORD }} ./gradlew build
+    - name: Build with Gradle
+      run: find -type f -name '*.apk'
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Debug
+        path: app/build/outputs/apk/release
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: vlatest
+        files: app/build/outputs/apk/release/*.apk
